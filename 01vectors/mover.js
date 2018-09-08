@@ -17,11 +17,15 @@ function windowResized() {
 }
 
 let Mover = function() {
-    this.location = createVector(random(width), random(height));
-    this.velocity = createVector(random(-20,20),random(-20,20));
-    this.r = 50;
+    this.location     = createVector(width/2, height/2);
+    this.velocity     = createVector(0, 0);
+    this.acceleration = createVector(-0.01, 0.001);
+    this.topspeed     = 10;
+    this.r            = 50;
 
     this.update = function() {
+        this.velocity.add(this.acceleration);
+        this.velocity.limit(this.topspeed);
         this.location.add(this.velocity);
     }
 
