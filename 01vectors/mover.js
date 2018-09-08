@@ -1,15 +1,19 @@
-let mover;
+let movers = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    mover = new Mover();
+    for (let i = 0; i < 10; i++) {
+        movers[i] = new Mover();
+    }
 }
 
 function draw() {
     clear();
-    mover.update();
-    mover.checkEdges();
-    mover.display();
+    for (let mover of movers) {
+        mover.update();
+        mover.checkEdges();
+        mover.display();
+    }
 }
 
 function windowResized() {
@@ -17,11 +21,12 @@ function windowResized() {
 }
 
 let Mover = function() {
-    this.location     = createVector(width/2, height/2);
+    this.factor       = Math.abs(randomGaussian(1, 0.2));
+    this.location     = createVector(random() * width, random() * height);
     this.velocity     = createVector(0, 0);
     this.acceleration; // = createVector(-0.01, 0.001);
-    this.topspeed     = 10;
-    this.r            = 50;
+    this.topspeed     = 10 * this.factor;
+    this.r            = 50 * this.factor;
     this.a            = 0;
     this.b            = 10000;
 
@@ -39,8 +44,9 @@ let Mover = function() {
         // Acceleration towards the mouse
         let mouse = createVector(mouseX, mouseY);
         let dir = p5.Vector.sub(mouse, this.location);
+        let mag = dir.mag();
         dir.normalize();
-        dir.mult(0.5);
+        dir.mult(50/mag);
         this.acceleration = dir;
 
         this.velocity.add(this.acceleration);
@@ -52,7 +58,7 @@ let Mover = function() {
 
     this.display = function() {
         stroke(255);
-        noFill();
+        fill(255, 20);
         ellipse(this.location.x, this.location.y, 2*this.r, 2*this.r);
     }
 
