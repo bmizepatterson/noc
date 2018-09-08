@@ -26,13 +26,23 @@ let Mover = function() {
     this.b            = 10000;
 
     this.update = function() {
-
+        // Random acceleration
         // this.acceleration = p5.Vector.random2D();
         // this.acceleration.mult(random(2));
-        this.acceleration = createVector(
-            map(noise(this.a), 0, 1, -1, 1), 
-            map(noise(this.b), 0, 1, -1, 1)
-        );
+
+        // Perlin noise acceleration
+        // this.acceleration = createVector(
+        //     map(noise(this.a), 0, 1, -1, 1), 
+        //     map(noise(this.b), 0, 1, -1, 1)
+        // );
+
+        // Acceleration towards the mouse
+        let mouse = createVector(mouseX, mouseY);
+        let dir = p5.Vector.sub(mouse, this.location);
+        dir.normalize();
+        dir.mult(0.5);
+        this.acceleration = dir;
+
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.topspeed);
         this.location.add(this.velocity);
