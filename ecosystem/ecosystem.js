@@ -40,13 +40,22 @@ let Fish = function(w, h) {
     this.orientation;
 
     this.update = function() {
-        this.prevLocation = createVector(this.location.x, this.location.y);
         // Perlin noise acceleration
         // X-axis motion should be much greater than y-axis motion
+        this.acceleration = createVector(
+            map(noise(this.a), 0, 1, -1, 1), 
+            map(noise(this.b), 0, 1, -0.1, 0.1)
+        );
 
-        this.acceleration = this.getAcceleration();
+        // Random acceleration with custom distribution:
+        // Accelerations that position the fish closer to the center of the
+        // screen tend to be chosen.
+        // this.acceleration = this.getAcceleration();
+
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.topspeed);
+        // Copy old location before changing it
+        this.prevLocation = this.location.copy();
         this.location.add(this.velocity);
 
         // Determine orientation
@@ -60,32 +69,27 @@ let Fish = function(w, h) {
     }
 
     this.getAcceleration = function() {
-        // Make copies of the velocity and position vectors for testing
-        let v = createVector(this.velocity.x, this.velocity.y);
-        let p = createVector(this.location.y, this.location.y);
-        let i = 0;
-        // fix this
+        // FIX THIS - CRASHES BROWSER
+        // Copy the velocity and location vectors
+        let v = this.velocity.copy();
+        let l = this.location.copy();
         while (true) {
-            let candidate = createVector(
-                map(noise(this.a), 0, 1, -1, 1), 
-                map(noise(this.b), 0, 1, -0.1, 0.1)
-            );
+            // Create random vector and see how it affects velocity and location
+            let candidate = p5.Vector.random2D();
             v.add(candidate);
-            p.add(v);
+            l.add(v);
             // Calculate the distance from the center horizontal that this 
             // candidate vector would result in scored on on a scale of 0 - 1 
             // (1 is edge of screen; 0 is on the center horizontal).
-            let yDist = Math.abs(this.tankHeight/2 - p.y) / 100;
-            console.log('yDist: ', yDist);
-            let r = random();
-            // The lower the yDist score, the higher the chance of this vector
-            // being returned.
-            if (r > yDist) {
+            let center = createVector(this.tankWidth/2, this.tankHeight/2);
+            let dist = l.sub(center);
+            let pX = random(this.tankWidth/2);
+            let pY = random(this.tankHeight/2);
+            if (abs(dist.x) < pX && abs(dist.y) < pY) {
+                console.log(`pX = ${pX}; pY = ${pY}; dist.x = ${abs(dist.x)}; dist.y = ${abs(dist.y)}`);
                 return candidate;
             }
-            return candidate;
         }
-
     }
 
     this.draw = function() {
