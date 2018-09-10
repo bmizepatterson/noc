@@ -16,6 +16,8 @@ function draw() {
         // Calculate gravity proportional to ball radius
         let gravity = createVector(0, 10);
         b.applyForce(gravity);
+        let wind = createVector(1, 0);
+        b.applyForce(wind);
         b.update();
         b.checkEdges();
         b.display();
@@ -51,11 +53,26 @@ let Ball = function(mass, color) {
     }
 
     this.checkEdges = function() {
+        // Bounce off the top edge
+        if (this.position.y < this.r + 1) {
+            // A little bounce
+            this.velocity.y *= this.bounce;
+            this.position.y = this.r + 1;
+        }
         // Bounce off the bottom edge
         if (this.position.y > (height - this.r)) {
-            // A little dampening when hitting the bottom
             this.velocity.y *= this.bounce;
-            this.position.y = (height - this.r);
+            this.position.y = height - this.r;
+        }
+        // Bounce of the right edge
+        if (this.position.x > (width - this.r)) {
+            this.velocity.x *= this.bounce;
+            this.position.x = width - this.r;
+        }
+        // Bounce off the left edge
+        if (this.position.x < this.r) {
+            this.velocity.x *= this.bounce;
+            this.position.x = this.r;
         }
 
     }
