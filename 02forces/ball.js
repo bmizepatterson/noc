@@ -1,13 +1,16 @@
-let balls = [], pockets = [];
+let balls = [], pockets = [], liquid;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 20; i++) {
         let mass = random(1, 5);
         let col = color(random(255), random(255), random(255), 100);
-        balls[i] = new Ball(mass, col, 100, 100);
+        balls[i] = new Ball(mass, col, i * width/20, random(400));
     }
-    for (let j = 0; j < 3; j++) {
+
+    // Pockets of friction
+    let pocketNumber = 0;
+    for (let j = 0; j < pocketNumber; j++) {
         let w = random(100,300);
         let h = random(100,300);
         pockets[j] = new Pocket(
@@ -18,10 +21,15 @@ function setup() {
             random(0.01, 0.5)
         );
     }
+
+    // Liquid
+    liquid = new Liquid(0, height/2, width, height/2, 0.1);
 }
 
 function draw() {
     clear();
+
+    liquid.draw();
 
     for (let pocket of pockets) {
         pocket.draw();
@@ -30,14 +38,18 @@ function draw() {
     for (let b of balls) {
         let gravity = createVector(0, 0.1 * b.mass);
         b.applyForce(gravity);
-        let wind = createVector(0.01, 0);
-        b.applyForce(wind);
-        if (b.position.x < b.r*2) {
-            b.applyForce(createVector(1,0));
-        }
-        if (b.position.x > width - b.r*2) {
-            b.applyForce(createVector(-1,0));
-        }
+        // Wind
+        // let wind = createVector(0.01, 0);
+        // b.applyForce(wind);
+
+        // Left and right edge forces
+        // if (b.position.x < b.r*2) {
+        //     b.applyForce(createVector(1,0));
+        // }
+        // if (b.position.x > width - b.r*2) {
+        //     b.applyForce(createVector(-1,0));
+        // }
+
         // Regular friction
         let c = 0.01;   // coefficient of friction
         let friction = b.velocity.copy();
@@ -49,14 +61,14 @@ function draw() {
         // Pockets of friction
         for (let p of pockets) {
             // If ball is in the pocket 
-            if (b.position.x + b.r > p.position.x && 
-                b.position.x - b.r < p.position.x + p.width &&
-                b.position.y + b.r > p.position.y &&
-                b.position.y - b.r < p.position.y + p.height) {
+            if (b.isInside(p)) {
                 // Add more friction
                 b.applyForce(p.getFriction(b.velocity));
             }
         }
+
+        // Liquid
+        if (b.isInside(liquid)) b.drag(liquid);
 
         b.update();
         b.checkEdges();
@@ -125,6 +137,27 @@ let Ball = function(mass, color, x, y) {
             this.acceleration.add(f);
         }
     }
+
+    this.isInside = function(rect) {
+        // works for any object with position vector and width/height properties
+        return (this.position.x + this.r > rect.position.x && 
+                this.position.x - this.r < rect.position.x + rect.width &&
+                this.position.y + this.r > rect.position.y &&
+                this.position.y - this.r < rect.position.y + rect.height);
+    }
+
+    this.drag = function(liquid) {
+        // calculates and applies the drag against a liquid object
+        if (liquid instanceof Liquid) {
+            let speed = this.velocity.mag();
+            let dragMag = liquid.friction * speed * speed;
+            let drag = this.velocity.copy();
+            drag.mult(-1);
+            drag.normalize();
+            drag.mult(dragMag);
+            this.applyForce(drag);
+        }
+    }
 }
 
 let Pocket = function(x, y, w, h, friction) {
@@ -145,5 +178,18 @@ let Pocket = function(x, y, w, h, friction) {
         friction.mult(-1);
         friction.normalize();
         return friction.mult(this.friction);
+    }
+}
+
+let Liquid = function(x, y, w, h, friction) {
+    this.position = createVector(x, y);
+    this.width = w;
+    this.height = h;
+    this.friction = friction;
+
+    this.draw = function() {
+        noStroke();
+        fill(175);
+        rect(this.position.x, this.position.y, this.width, this.height);
     }
 }
