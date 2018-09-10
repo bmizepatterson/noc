@@ -1,4 +1,4 @@
-let balls = [];
+let balls = [], pockets = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -7,10 +7,25 @@ function setup() {
         let col = color(random(255), random(255), random(255), 100);
         balls[i] = new Ball(mass, col, 100, 100);
     }
+    for (let j = 0; j < 3; j++) {
+        let w = random(100,300);
+        let h = random(100,300);
+        pockets[j] = new Pocket(
+            random(width - w),
+            random(height - h),
+            w,
+            h,
+            random(0.01, 0.5)
+        );
+    }
 }
 
 function draw() {
     clear();
+
+    for (let pocket of pockets) {
+        pocket.draw();
+    }
 
     for (let b of balls) {
         let gravity = createVector(0, 0.1 * b.mass);
@@ -23,6 +38,26 @@ function draw() {
         if (b.position.x > width - b.r*2) {
             b.applyForce(createVector(-1,0));
         }
+        // Regular friction
+        let c = 0.01;   // coefficient of friction
+        let friction = b.velocity.copy();
+        friction.mult(-1);
+        friction.normalize();
+        friction.mult(c);
+        b.applyForce(friction);
+
+        // Pockets of friction
+        for (let p of pockets) {
+            // If ball is in the pocket 
+            if (b.position.x + b.r > p.position.x && 
+                b.position.x - b.r < p.position.x + p.width &&
+                b.position.y + b.r > p.position.y &&
+                b.position.y - b.r < p.position.y + p.height) {
+                // Add more friction
+                b.applyForce(p.getFriction(b.velocity));
+            }
+        }
+
         b.update();
         b.checkEdges();
         b.display();
@@ -89,5 +124,26 @@ let Ball = function(mass, color, x, y) {
             f.div(this.mass);
             this.acceleration.add(f);
         }
+    }
+}
+
+let Pocket = function(x, y, w, h, friction) {
+    this.position = createVector(x, y);
+    this.width = w;
+    this.height = h;
+    this.friction = friction;
+    this.color = color((1-friction) * 255);
+
+    this.draw = function() {
+        noStroke();
+        fill(this.color);
+        rect(this.position.x, this.position.y, this.width, this.height);
+    }
+
+    this.getFriction = function(velocity) {
+        let friction = velocity.copy();
+        friction.mult(-1);
+        friction.normalize();
+        return friction.mult(this.friction);
     }
 }
