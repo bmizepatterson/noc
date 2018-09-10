@@ -2,10 +2,10 @@ let balls = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    for (let i = 0; i < 10; i++) {
-        let radius = random(15, 40);
+    for (let i = 0; i < 100; i++) {
+        let mass = random(1, 5);
         let col = color(random(255), random(255), random(255), 100);
-        balls[i] = new Ball(radius, col);
+        balls[i] = new Ball(mass, col, 100, 100);
     }
 }
 
@@ -13,11 +13,16 @@ function draw() {
     clear();
 
     for (let b of balls) {
-        // Calculate gravity proportional to ball radius
-        let gravity = createVector(0, 10);
+        let gravity = createVector(0, 0.1 * b.mass);
         b.applyForce(gravity);
-        let wind = createVector(1, 0);
+        let wind = createVector(0.01, 0);
         b.applyForce(wind);
+        if (b.position.x < b.r*2) {
+            b.applyForce(createVector(1,0));
+        }
+        if (b.position.x > width - b.r*2) {
+            b.applyForce(createVector(-1,0));
+        }
         b.update();
         b.checkEdges();
         b.display();
@@ -28,13 +33,13 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
 }
 
-let Ball = function(mass, color) {
-    this.position     = createVector(randomGaussian(width/2, width/4), 0);
+let Ball = function(mass, color, x, y) {
+    this.position     = createVector(x, y);
     this.velocity     = createVector(0, 0);
     this.acceleration = createVector(0, 0);
     this.bounce       = random(-0.9, -0.5);
     this.mass         = mass;
-    this.r            = mass/2;
+    this.r            = mass*16
     this.color        = color;
 
     this.update = function() {
@@ -49,7 +54,7 @@ let Ball = function(mass, color) {
         stroke(0);
         strokeWeight(2);
         fill(this.color);
-        ellipse(this.position.x, this.position.y, this.mass, this.mass);
+        ellipse(this.position.x, this.position.y, this.r*2, this.r*2);
     }
 
     this.checkEdges = function() {
