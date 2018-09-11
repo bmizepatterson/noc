@@ -4,7 +4,7 @@ function setup() {
     createCanvas(windowWidth, windowHeight);
     c_water = color(50, 126, 206);
     c_fish  = color(232, 109, 31);
-    let total = 1; //random(5,15);
+    let total = 10; //random(5,15);
     for (let i = 0; i < total; i++) {
         school[i] = new Fish(50, 25);
     }
@@ -13,6 +13,14 @@ function setup() {
 function draw() {
     background(c_water);
     for (let fish of school) {
+        let wander = createVector(
+            map(noise(fish.a), 0, 1, -1, 1), 
+            map(noise(fish.b), 0, 1, -0.1, 0.1)
+        );
+        fish.a += 0.01;
+        fish.b += 0.01;
+        fish.applyForce(wander);
+
         fish.update();
         fish.checkEdges();
         fish.draw();
@@ -24,81 +32,44 @@ function windowResized() {
 }
 
 let Fish = function(w, h) {
-    const LEFT = -1;
-    const RIGHT = 1;
-    this.width = w;
-    this.height = h;
-    this.tankHeight = height;
-    this.tankWidth = width;
-    this.location = createVector(this.tankWidth/2, this.tankHeight/2);
-    this.prevLocation = this.location;
-    this.velocity = createVector(0, 0);
-    this.acceleration;
-    this.topspeed = 3;
-    this.a = 0;
-    this.b = 10000;
-    this.orientation;
+    const LEFT        = -1;
+    const RIGHT       = 1;
+    this.width        = w;
+    this.height       = h;
+    this.mass         = w * h / 100;
+    this.tankHeight   = height;
+    this.tankWidth    = width;
+    this.position     = createVector(
+        this.tankWidth / 2 + random(-200, 200),
+        this.tankHeight / 2 + random(-200, 200)
+    );
+    this.prevPosition = this.position.copy();
+    this.velocity     = createVector(0, 0);
+    this.acceleration = createVector(0, 0);
+    this.topspeed     = 3;
+    this.a            = random(1000);
+    this.b            = random(1001, 10000);
+    this.orientation  = LEFT;
 
     this.update = function() {
-        // Perlin noise acceleration
-        // X-axis motion should be much greater than y-axis motion
-        this.acceleration = createVector(
-            map(noise(this.a), 0, 1, -1, 1), 
-            map(noise(this.b), 0, 1, -0.1, 0.1)
-        );
-
-        // Random acceleration with custom distribution:
-        // Accelerations that position the fish closer to the center of the
-        // screen tend to be chosen.
-        // this.acceleration = this.getAcceleration();
-
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.topspeed);
-        // Copy old location before changing it
-        this.prevLocation = this.location.copy();
-        this.location.add(this.velocity);
-
+        this.prevPosition = this.position.copy();
+        this.position.add(this.velocity);
         // Determine orientation
-        if (this.prevLocation.x < this.location.x) {
+        if (this.prevPosition.x < this.position.x) {
             this.orientation = RIGHT;
         } else {
             this.orientation = LEFT;
-        }
-        this.a += 0.01;
-        this.b += 0.01;
-    }
-
-    this.getAcceleration = function() {
-        // FIX THIS - CRASHES BROWSER
-        // Copy the velocity and location vectors
-        let v = this.velocity.copy();
-        let l = this.location.copy();
-        while (true) {
-            // Create random vector and see how it affects velocity and location
-            let candidate = p5.Vector.random2D();
-            v.add(candidate);
-            l.add(v);
-            // Calculate the distance from the center horizontal that this 
-            // candidate vector would result in scored on on a scale of 0 - 1 
-            // (1 is edge of screen; 0 is on the center horizontal).
-            let center = createVector(this.tankWidth/2, this.tankHeight/2);
-            let dist = l.sub(center);
-            let pX = random(this.tankWidth/2);
-            let pY = random(this.tankHeight/2);
-            if (abs(dist.x) < pX && abs(dist.y) < pY) {
-                console.log(`pX = ${pX}; pY = ${pY}; dist.x = ${abs(dist.x)}; dist.y = ${abs(dist.y)}`);
-                return candidate;
-            }
-        }
+        }        
     }
 
     this.draw = function() {
+        push();
         noStroke();
         fill(c_fish);
-        translate(this.location.x, this.location.y);
-        if (this.orientation == RIGHT) {
-            rotate(PI);
-        }
+        translate(this.position.x, this.position.y);
+        if (this.orientation == RIGHT) rotate(PI);
         ellipse(
             0 - this.width * 0.1, 
             0,
@@ -113,19 +84,29 @@ let Fish = function(w, h) {
             0 + this.width * 0.5,
             0 + this.height * 0.5,
         );
+        pop();
     }
 
     this.checkEdges = function() {
-        if (this.location.x + this.width/2 > this.tankWidth) {
-          this.location.x = this.prevLocation.x;
-        } else if (this.location.x - this.width/2 < 0) {
-          this.location.x = this.prevLocation.x;
+        if (this.position.x + this.width/2 > this.tankWidth) {
+          this.position.x = this.prevPosition.x;
+        } else if (this.position.x - this.width/2 < 0) {
+          this.position.x = this.prevPosition.x;
         }
      
-        if (this.location.y + this.height/2 > this.tankHeight) {
-          this.location.y = this.prevLocation.y;
-        } else if (this.location.y - this.height/2 < 0) {
-          this.location.y = this.prevLocation.y;
+        if (this.position.y + this.height/2 > this.tankHeight) {
+          this.position.y = this.prevPosition.y;
+        } else if (this.position.y - this.height/2 < 0) {
+          this.position.y = this.prevPosition.y;
+        }
+    }
+
+    this.applyForce = function(force) {
+        if (force instanceof p5.Vector) {
+            f = force.copy();
+            // acceleration = force / mass
+            f.div(this.mass);
+            this.acceleration.add(f);
         }
     }
 }
