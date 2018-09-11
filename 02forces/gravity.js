@@ -2,7 +2,8 @@ let attractors = [], movers = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    for (let a = 0; a < 10; a++) {
+    for (let a = 0; a < 3; a++) {
+        // attractors[a] = new Attractor(width/2, height/2, 20);
         attractors[a] = new Attractor(random(width), random(height), 20);
     }
     for (let i = 0; i < 10; i++) {
@@ -16,17 +17,17 @@ function setup() {
 
 function draw() {
     clear();
-    // for (let a of attractors) {
-    //     a.drag();
-    //     a.hover(mouseX, mouseY);
-    //     a.draw();        
-    // }
     for (let m of movers) {
         for (let a of attractors) {
             m.applyForce(a.attract(m));
         }
         m.update();
         m.draw();
+    }
+    for (let a of attractors) {
+        a.drag();
+        a.hover(mouseX, mouseY);
+        a.draw();        
     }
 }
 
@@ -109,13 +110,13 @@ let Mover = function(x, y, mass) {
     }
 
     this.draw = function() {
-        noStroke();
-        fill(255);
-        ellipse(this.position.x, this.position.y, this.mass*16, this.mass*16);
         stroke(150);
         for (let p = 0; p < this.trail.length - 1; p++) {
             line(this.trail[p].x, this.trail[p].y, this.trail[p+1].x, this.trail[p+1].y);
         }
+        noStroke();
+        fill(255);
+        ellipse(this.position.x, this.position.y, this.mass*16, this.mass*16);
     }
 
     this.applyForce = function(force) {
