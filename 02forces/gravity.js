@@ -1,22 +1,27 @@
-let a, m;
+let a, movers = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
     a = new Attractor(width/2, height/2, 20);
-    m = new Mover(
-        width/2 + random(-100, 100), 
-        height/2 +random(-100,100), 
-        random(0.1, 2)
-    );
+    for (let i = 0; i < 10; i++) {
+        movers[i] = new Mover(
+            width/2 + random(-200, 200), 
+            height/2 + random(-200, 200), 
+            random(0.1, 2)
+        );
+    }
 }
 
 function draw() {
     clear();
+    a.drag();
+    a.hover(mouseX, mouseY);
     a.draw();
-    let force = a.attract(m);
-    m.applyForce(force);
-    m.update();
-    m.draw();
+    for (let m of movers) {
+        m.applyForce(a.attract(m));
+        m.update();
+        m.draw();
+    }
 }
 
 function windowResized() {
@@ -27,10 +32,16 @@ let Attractor = function(x, y, mass) {
     const G = 1;     // gravitational constant
     this.position = createVector(x, y);
     this.mass = mass;
+    this.dragging = false;
+    this.rollover = false;
+    this.dragOffset = createVector(0, 0);
 
     this.draw = function() {
+        ellipseMode(CENTER);
         noStroke();
-        fill(255);
+        if (this.dragging) fill(50);
+        else if (this.rollover) fill(100);
+        else fill(255);
         ellipse(this.position.x, this.position.y, this.mass*2, this.mass*2);
     }
 
@@ -44,11 +55,41 @@ let Attractor = function(x, y, mass) {
         force.mult(strength);
         return force;
     }
+
+    this.clicked = function(mx, my) {
+        let d = dist(mx, my, this.position.x, this.position.y);
+        if (d < this.mass) {
+          this.dragging = true;
+          this.dragOffset.x = this.position.x-mx;
+          this.dragOffset.y = this.position.y-my;
+        }
+    }
+
+    this.hover = function(mx, my) {
+        let d = dist(mx, my, this.position.x, this.position.y);
+        if (d < this.mass) {
+          this.rollover = true;
+        } 
+        else {
+          this.rollover = false;
+        }
+    }
+
+    this.stopDragging = function() {
+        this.dragging = false;
+    }
+
+    this.drag = function() {
+        if (this.dragging) {
+          this.position.x = mouseX + this.dragOffset.x;
+          this.position.y = mouseY + this.dragOffset.y;
+        }
+    }
 }
 
 let Mover = function(x, y, mass) {
     this.position     = createVector(x, y);
-    this.velocity     = createVector(0, 0);
+    this.velocity     = createVector(1, 0);
     this.acceleration = createVector(0, 0);
     this.mass         = mass;
 
@@ -72,4 +113,12 @@ let Mover = function(x, y, mass) {
             this.acceleration.add(f);
         }
     }
+}
+
+function mousePressed() {
+    a.clicked(mouseX, mouseY); 
+}
+
+function mouseReleased() {
+    a.stopDragging(); 
 }
