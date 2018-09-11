@@ -1,12 +1,14 @@
-let a, movers = [];
+let attractors = [], movers = [];
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    a = new Attractor(width/2, height/2, 20);
+    for (let a = 0; a < 3; a++) {
+        attractors[a] = new Attractor(random(width), random(height), 20);
+    }
     for (let i = 0; i < 10; i++) {
         movers[i] = new Mover(
-            width/2 + random(-200, 200), 
-            height/2 + random(-200, 200), 
+            random(width), 
+            random(height), 
             random(0.1, 2)
         );
     }
@@ -14,11 +16,15 @@ function setup() {
 
 function draw() {
     clear();
-    a.drag();
-    a.hover(mouseX, mouseY);
-    a.draw();
+    for (let a of attractors) {
+        a.drag();
+        a.hover(mouseX, mouseY);
+        a.draw();        
+    }
     for (let m of movers) {
-        m.applyForce(a.attract(m));
+        for (let a of attractors) {
+            m.applyForce(a.attract(m));
+        }
         m.update();
         m.draw();
     }
@@ -41,7 +47,7 @@ let Attractor = function(x, y, mass) {
         noStroke();
         if (this.dragging) fill(50);
         else if (this.rollover) fill(100);
-        else fill(255);
+        else fill(255, 255, 0);
         ellipse(this.position.x, this.position.y, this.mass*2, this.mass*2);
     }
 
@@ -116,9 +122,13 @@ let Mover = function(x, y, mass) {
 }
 
 function mousePressed() {
-    a.clicked(mouseX, mouseY); 
+    for (let a of attractors) {
+        a.clicked(mouseX, mouseY); 
+    }
 }
 
 function mouseReleased() {
-    a.stopDragging(); 
+    for (let a of attractors) {
+        a.stopDragging();
+    }
 }
