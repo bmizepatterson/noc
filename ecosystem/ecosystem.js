@@ -17,8 +17,8 @@ function draw() {
             map(noise(fish.a), 0, 1, -1, 1), 
             map(noise(fish.b), 0, 1, -0.1, 0.1)
         );
-        fish.a += 0.01;
-        fish.b += 0.01;
+        fish.a += random(0.001, 0.1); //0.01;
+        fish.b += random(0.001, 0.1); //0.01;
         fish.applyForce(wander);
 
         fish.update();
