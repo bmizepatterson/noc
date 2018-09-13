@@ -11,7 +11,7 @@ function setup() {
     // Create fish
     let total = 10;
     for (let i = 0; i < total; i++) {
-        tank.add(new Fish(50, 25, color(232, 109, 31), tank));
+        tank.addFish(50, 25, color(232, 109, 31));
     }    
     tanks.push(tank);
 }
@@ -40,7 +40,7 @@ function draw() {
         if (random() < 0.001) {
             let size = random(0.2, 0.8);
             let lineLength = random(100, tank.height-100);
-            tank.add(new Hook(size, lineLength, tank));
+            tank.addHook(size, lineLength);
         }
     }
 
@@ -314,13 +314,11 @@ let Tank = function(x, y, w, h, color) {
         pop();
     }
 
-    this.add = function(thing) {
-        if (thing instanceof Fish) {
-            this.fish.push(thing);
-        } else if (thing instanceof Hook) {
-            this.hooks.push(thing);
-        } else {
-            console.log('Cannot add ', thing, ' to tank.');
-        }
+    this.addFish = function(w, h, color) {
+        this.fish.push(new Fish(w, h, color, this));
+    }
+
+    this.addHook = function(size, maxLine) {
+        this.hooks.push(new Hook(size, maxLine, this));
     }
 }
