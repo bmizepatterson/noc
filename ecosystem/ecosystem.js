@@ -1,4 +1,8 @@
-let school = [], c_water, c_fish;
+let school = [], c_water, c_fish, hooks = [], hookpng;
+
+function preload() {
+    hookpng = loadImage('hook.png');    
+}
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -8,10 +12,16 @@ function setup() {
     for (let i = 0; i < total; i++) {
         school[i] = new Fish(50, 25);
     }
+    hooks.push(new Hook(100, 100, 100, 295));
 }
 
 function draw() {
     background(c_water);
+
+    for (let hook of hooks) {
+        hook.draw();
+    }
+
     for (let fish of school) {
         let hMovement = fish.getDirection();
         let wander = createVector(
@@ -149,4 +159,17 @@ let Fish = function(w, h) {
         force.mult(strength);
         return force;
     }
+}
+
+let Hook = function(x, y, w, h) {
+    this.position = createVector(x, y);
+    this.width = w;
+    this.height = h;
+
+    this.draw = function() {
+        push();
+        image(hookpng, this.position.x, this.position.y, this.width, this.height);
+        pop();
+    }
+
 }
