@@ -12,9 +12,7 @@ function setup() {
     let total = 10;
     for (let i = 0; i < total; i++) {
         tank.add(new Fish(50, 25, color(232, 109, 31), tank));
-    }
-    // Create hooks
-    tank.add(new Hook(100, 100, 0.5, random(100, tank.height-100), tank));
+    }    
     tanks.push(tank);
 }
 
@@ -37,7 +35,15 @@ function draw() {
                 item.processFrame();
             }
         }
+    
+        // Randomly create fish hooks
+        if (random() < 0.001) {
+            let size = random(0.2, 0.8);
+            let lineLength = random(100, tank.height-100);
+            tank.add(new Hook(size, lineLength, tank));
+        }
     }
+
 }
 
 function windowResized() {
@@ -214,7 +220,7 @@ let Fish = function(w, h, color, tank) {
     }
 }
 
-let Hook = function(x, y, size, maxLine, tank) {
+let Hook = function(size, maxLine, tank) {
     // Size should be a factor between 0 and 1 by which to scale the hook image
     this.size         = constrain(size, 0, 1);
     this.width        = 100 * size;
