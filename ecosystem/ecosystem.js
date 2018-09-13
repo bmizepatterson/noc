@@ -209,7 +209,7 @@ let Fish = function(w, h, color, tank) {
     }
 }
 
-let Hook = function(x, y, size, lineLength, tank) {
+let Hook = function(x, y, size, maxLine, tank) {
     // Size should be a factor between 0 and 1 by which to scale the hook image
     this.size         = constrain(size, 0, 1);
     this.width        = 100 * size;
@@ -219,15 +219,23 @@ let Hook = function(x, y, size, lineLength, tank) {
         random(this.tank.width - this.width),
         -this.height
     );
-    this.velocity     = createVector(0, 1);
+    this.prevPosition = this.position.copy();
+    this.velocity     = createVector(0, 0);
     this.acceleration = createVector(0, 0);
-    this.lineLength   = lineLength;
+    this.maxLine      = maxLine;
     this.zIndex       = random(1000);
+    // Save initial start/end points of the fishing line
+    this.lineStart    = createVector(
+        this.position.x + (this.width * 0.9),
+        this.position.y + 5
+    );
+    this.lineEnd      = this.lineStart.copy();
 
     this.update = function() {
+        this.prevPosition = this.position.copy();
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
-        this.position.y = constrain(this.position.y, -this.height, this.lineLength);
+        this.lineEnd.add(this.velocity);
         this.acceleration.mult(0);
     }
 
@@ -235,7 +243,7 @@ let Hook = function(x, y, size, lineLength, tank) {
         push();
         stroke(100, 100);
         strokeWeight(2);
-        line(this.position.x + (this.width * 0.9), this.position.y+5, this.position.x + (this.width*0.9), 0);
+        line(this.lineStart.x, this.lineStart.y, this.lineEnd.x, this.lineEnd.y);
         image(hookpng, this.position.x, this.position.y, this.width, this.height);
         pop();
     }
@@ -248,8 +256,21 @@ let Hook = function(x, y, size, lineLength, tank) {
         }
     }
 
+    this.checkLength = function() {
+        let lineLength = this.lineEnd.copy();
+        lineLength.sub(this.lineStart);
+        lineLength = lineLength.mag();
+        if (lineLength > this.maxLine) {
+            this.velocity.y *= -0.2;
+            this.position = this.prevPosition.copy();
+        }
+    }
+
     this.processFrame = function() {
+        // Gravity
+        this.applyForce(createVector(0, 0.01));
         this.update();
+        this.checkLength();
         this.draw();
     }
 }
