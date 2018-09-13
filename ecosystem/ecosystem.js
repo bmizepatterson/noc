@@ -23,13 +23,13 @@ function draw() {
     }
 
     for (let fish of school) {
-        let hMovement = fish.getDirection();
+        let dir = fish.getDirection();
         let wander = createVector(
-            map(noise(fish.a), 0, 1, hMovement.min, hMovement.max), 
-            map(noise(fish.b), 0, 1, -0.1, 0.1)
+            map(noise(fish.a), 0, 1, dir.hMin, dir.hMax), 
+            map(noise(fish.b), 0, 1, dir.vMin, dir.vMax)
         );
         fish.a += random(0.001, 10);
-        fish.b += random(0.001, 0.1);
+        fish.b += random(0.001, 10);
         fish.applyForce(wander);
 
         // Attract toward mouse
@@ -48,13 +48,13 @@ function windowResized() {
 }
 
 let Fish = function(w, h) {
-    const LEFT        = -1;
-    const RIGHT       = 1;
+    const LEFT = -1, RIGHT = 1, UP = -10, DOWN = 10;   // Orientations
     this.width        = w;
     this.height       = h;
-    this.mass         = w * h / 100;
+    this.mass         = w * h / 100;    // Mass is proportional to area, in arbitrary fashion
     this.tankHeight   = height;
     this.tankWidth    = width;
+    // Fish start somewhere in the middle of the tank
     this.position     = createVector(
         this.tankWidth / 2 + random(-200, 200),
         this.tankHeight / 2 + random(-200, 200)
@@ -62,22 +62,27 @@ let Fish = function(w, h) {
     this.prevPosition = this.position.copy();
     this.velocity     = createVector(0, 0);
     this.acceleration = createVector(0, 0);
-    this.topspeed     = 3;
+    this.topspeed     = 5;
     this.a            = random(1000);
     this.b            = random(1001, 10000);
-    this.orientation  = LEFT;
+    // The orientation property is an object with two properties:
+    // h = LEFT|RIGHT
+    // v = UP|DOWN
+    this.orientation  = {h: LEFT, v: UP};
 
     this.update = function() {
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.topspeed);
         this.prevPosition = this.position.copy();
         this.position.add(this.velocity);
-        // Determine orientation
-        if (this.prevPosition.x < this.position.x) {
-            this.orientation = RIGHT;
-        } else {
-            this.orientation = LEFT;
-        }        
+
+        // Update orientation
+        // If heading is perfectly horizontal/vertical then the orientation doesn't change.
+        let heading = this.velocity.heading();
+        if (heading > 0 && heading < HALF_PI || heading < 0 && heading > -HALF_PI) this.orientation.h = RIGHT;
+        if (heading > 0 && heading > HALF_PI || heading < 0 && heading < -HALF_PI) this.orientation.h = LEFT;
+        if (heading > 0) this.orientation.v = DOWN;
+        if (heading < 0) this.orientation.v = UP;
     }
 
     this.draw = function() {
@@ -85,29 +90,17 @@ let Fish = function(w, h) {
         noStroke();
         fill(c_fish);
         translate(this.position.x, this.position.y);
-        // Get the heading of the velocity vector and rotate toward current direction
+        // Fish is drawn facing left by default. Get the heading of the velocity 
+        // vector and rotate toward current direction.
         rotate(this.velocity.heading() - PI);
-        ellipse(
-            0 - this.width * 0.1, 
-            0,
-            this.width * 0.8, 
-            this.height
-        );
-        triangle(
-            0,
-            0,
-            0 + this.width * 0.5,
-            0 - this.height * 0.5,
-            0 + this.width * 0.5,
-            0 + this.height * 0.5,
-        );
+        ellipse(0 - this.width * 0.1, 0, this.width * 0.8, this.height);
+        triangle(0, 0, 0 + this.width * 0.5, 0 - this.height * 0.5, 0 + this.width * 0.5, 0 + this.height * 0.5);
         pop();
     }
 
     this.checkEdges = function() {
         // Bump against the edges of the tank.
-        // Calculate edge as a circle around the fish of diameter equal to
-        // the fish's larger dimension.
+        // Calculate edge of fish as a circle around the fish of diameter equal to the fish's larger dimension.
         let radius = this.width > this.height ? this.width / 2 : this.height / 2;
         let right  = this.position.x + radius;
         let left   = this.position.x - radius;
@@ -132,25 +125,70 @@ let Fish = function(w, h) {
 
     this.getDirection = function() {
         // Return a range of values on which to map Perlin noise.
+        let p, buffer, direction = {};
+        const RIGHT_MIN = 0, RIGHT_MAX = 10, LEFT_MIN = -10, LEFT_MAX = 0;
+        const DOWN_MIN = 0, DOWN_MAX = 10, UP_MIN = -10, UP_MAX = 0;
+
+        // HORIZONTAL MOVEMENT
         // Negative values accelerate to the left; positive values to the right.
-        let p = random();
+        p = random();
         // Fish within the left/right buffer will definintely turn around
-        let buffer = 100;
-        if ((this.position.x < buffer && this.orientation == LEFT) ||
-            (this.position.x > this.tankWidth - buffer && this.orientation == RIGHT)) {
+        buffer = 50;
+        if ((this.position.x < buffer && this.orientation.h == LEFT) ||
+            (this.position.x > this.tankWidth - buffer && this.orientation.h == RIGHT)) {
             p += 0.5;
         }
-
         if (p > 0.5) {
-            // Return positive range to start moving to the right
-            if (this.orientation == LEFT) return {min: 0.01, max: 1};
-            // Return negative range to start moving to the left
-            else return {min: -1, max: 0};
+            if (this.orientation.h == LEFT) {
+                // Set a positive range to start moving to the right
+                direction.hMin = RIGHT_MIN;
+                direction.hMax = RIGHT_MAX;
+            } else {
+                // Set a negative range to start moving to the left
+                direction.hMin = LEFT_MIN;
+                direction.hMax = LEFT_MAX;
+            }
         } else {
             // Keep going the same direction
-            if (this.orientation == LEFT) return {min: -1, max: -0.01};
-            else return {min: 0, max: 1};
+            if (this.orientation.h == LEFT) {
+                direction.hMin = LEFT_MIN;
+                direction.hMax = LEFT_MAX;
+            } else {
+                direction.hMin = RIGHT_MIN;
+                direction.hMax = RIGHT_MAX;
+            }
         }
+        
+        // VERTICAL MOVEMENT
+        // Negative values accelerate up; positive values down.
+        p = random();
+        // Fish within the top/bottom buffer will definintely turn around
+        buffer = 50;
+        if ((this.position.y < buffer && this.orientation.v == UP) ||
+            (this.position.y > this.tankHeight - buffer && this.orientation.v == DOWN)) {
+            p += 0.5;
+        }
+        if (p > 0.5) {
+            if (this.orientation.v == DOWN) {
+                // Start moving up
+                direction.vMin = UP_MIN;
+                direction.vMax = UP_MAX;
+            } else {
+                // Start moving down
+                direction.vMin = DOWN_MIN;
+                direction.vMax = DOWN_MAX;
+            }
+        } else {
+            // Keep going the same direction
+            if (this.orientation.v == DOWN) {
+                direction.vMin = DOWN_MIN;
+                direction.vMax = DOWN_MAX;
+            } else {
+                direction.vMin = UP_MIN;
+                direction.vMax = UP_MAX;
+            }
+        }
+        return direction;
     }
 
     this.attractMouse = function(x, y) {
@@ -175,5 +213,4 @@ let Hook = function(x, y, w, h) {
         image(hookpng, this.position.x, this.position.y, this.width, this.height);
         pop();
     }
-
 }
