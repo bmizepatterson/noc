@@ -28,13 +28,13 @@ function draw() {
             map(noise(fish.a), 0, 1, hMovement.min, hMovement.max), 
             map(noise(fish.b), 0, 1, -0.1, 0.1)
         );
-        fish.a += random(0.001, 0.1);
+        fish.a += random(0.001, 10);
         fish.b += random(0.001, 0.1);
         fish.applyForce(wander);
 
         // Attract toward mouse
         if (mouseX && mouseY) {
-            fish.applyForce(fish.attract(mouseX, mouseY));
+            fish.applyForce(fish.attractMouse(mouseX, mouseY));
         }
 
         fish.update();
@@ -133,7 +133,7 @@ let Fish = function(w, h) {
         // Negative values accelerate to the left; positive values to the right.
         let p = random();
         // Fish within the left/right buffer will definintely turn around
-        let buffer = 10;
+        let buffer = 100;
         if ((this.position.x < buffer && this.orientation == LEFT) ||
             (this.position.x > this.tankWidth - buffer && this.orientation == RIGHT)) {
             p += 0.5;
@@ -151,12 +151,13 @@ let Fish = function(w, h) {
         }
     }
 
-    this.attract = function(x, y) {
+    this.attractMouse = function(x, y) {
         let origin = createVector(x, y);
         let force = p5.Vector.sub(origin, this.position);
         let distance = force.mag();
         force.normalize();
-        let strength = 10000 / (distance * 0.5);
+        let strength = 0;
+        if (distance < 200) strength = 10000 / (distance * 0.5);
         force.mult(strength);
         return force;
     }
