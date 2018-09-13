@@ -13,7 +13,7 @@ function setup() {
     for (let i = 0; i < total; i++) {
         let size = createVector(50, 25);
         size.mult(random(0.5, 2));
-        tank.addFish(size.x, size.y, color(232, 109, 31));
+        tank.addFish(size.x, size.y);
     }    
     tanks.push(tank);
 }
@@ -25,10 +25,10 @@ function draw() {
         tank.draw();
         // We're going to iterate over all the fish and hooks in this tank.
         let items = tank.fish.concat(tank.hooks);
-        // Order items according to zIndex property (largest to smallest)
+        // Order items according to zIndex property
         items.sort((a,b) => {
             if (a.zIndex == undefined || b.zIndex == undefined) return 0;
-            return b.zIndex - a.zIndex;
+            return a.zIndex - b.zIndex;
         });
         // Now draw each item
         for (let item of items) {
@@ -57,13 +57,12 @@ function windowResized() {
     }
 }
 
-let Fish = function(w, h, color, tank) {
+let Fish = function(w, h, tank) {
     const LEFT = -1, RIGHT = 1, UP = -10, DOWN = 10;   // Orientations
     this.width        = w;
     this.height       = h;
     // Mass is proportional to area, in arbitrary fashion
     this.mass         = w * h / 100;
-    this.col          = color;
     this.tank         = tank;
     this.position     = createVector(random(this.tank.width), random(this.tank.height));
     this.velocity     = createVector(0, 0);
@@ -76,6 +75,9 @@ let Fish = function(w, h, color, tank) {
     // v = UP|DOWN
     this.orientation  = {h: LEFT, v: UP};
     this.zIndex       = random(1000);
+    // Draw fish that are farther away darker.
+    let lightness     = floor(map(this.zIndex, 0, 1000, 25, 53));
+    this.col          = color(`hsl(23, 81%, ${lightness}%)`);
 
     this.update = function() {
         this.velocity.add(this.acceleration);
@@ -322,8 +324,8 @@ let Tank = function(x, y, w, h, color) {
         pop();
     }
 
-    this.addFish = function(w, h, color) {
-        this.fish.push(new Fish(w, h, color, this));
+    this.addFish = function(w, h) {
+        this.fish.push(new Fish(w, h, this));
     }
 
     this.addHook = function(size, maxLine) {
