@@ -181,6 +181,12 @@ let Fish = function(w, h, color, tank) {
                 direction.vMax = UP_MAX;
             }
         }
+        // The more hooks in the tank, the crazier the movement should be.
+        let frenzyLevel = ceil(this.tank.hooks.length);
+        for (let property in direction) {
+            property *= frenzyLevel;
+        }
+
         return direction;
     }
 
