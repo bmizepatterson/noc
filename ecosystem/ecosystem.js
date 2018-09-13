@@ -85,7 +85,8 @@ let Fish = function(w, h) {
         noStroke();
         fill(c_fish);
         translate(this.position.x, this.position.y);
-        if (this.orientation == RIGHT) rotate(PI);
+        // Get the heading of the velocity vector and rotate toward current direction
+        rotate(this.velocity.heading() - PI);
         ellipse(
             0 - this.width * 0.1, 
             0,
