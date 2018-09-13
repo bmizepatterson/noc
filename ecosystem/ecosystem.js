@@ -247,6 +247,7 @@ let Hook = function(size, maxLine, tank) {
         this.position.y + 5
     );
     this.lineEnd      = this.lineStart.copy();
+    this.ascend       = false;
 
     this.update = function() {
         this.prevPosition = this.position.copy();
@@ -265,14 +266,6 @@ let Hook = function(size, maxLine, tank) {
         pop();
     }
 
-    this.applyForce = function(force) {
-        if (force instanceof p5.Vector) {
-            f = force.copy();
-            // Not gonna bother with mass of hook
-            this.acceleration.add(f);
-        }
-    }
-
     this.checkLength = function() {
         let lineLength = this.lineEnd.copy();
         lineLength.sub(this.lineStart);
@@ -284,8 +277,11 @@ let Hook = function(size, maxLine, tank) {
     }
 
     this.processFrame = function() {
-        // Gravity
-        this.applyForce(createVector(0, 0.01));
+        // Randomly switch to ascend mode
+        if (random() < 0.001) this.ascend = true;
+        let force = createVector(0, 0.01);
+        if (this.ascend) force.mult(-1);
+        this.acceleration = force;
         this.update();
         this.checkLength();
         this.draw();
