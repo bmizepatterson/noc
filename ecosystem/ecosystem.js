@@ -14,7 +14,7 @@ function setup() {
         tank.add(new Fish(50, 25, color(232, 109, 31), tank));
     }
     // Create hooks
-    tank.add(new Hook(100, 100, 0.5, tank));
+    tank.add(new Hook(100, 100, 0.5, random(100, tank.height-100), tank));
     tanks.push(tank);
 }
 
@@ -227,7 +227,7 @@ let Fish = function(w, h, color, tank) {
     }
 }
 
-let Hook = function(x, y, size, tank) {
+let Hook = function(x, y, size, lineLength, tank) {
     // Size should be a factor between 0 and 1 by which to scale the hook image
     this.size         = constrain(size, 0, 1);
     this.width        = 100 * size;
@@ -245,11 +245,13 @@ let Hook = function(x, y, size, tank) {
     this.update = function() {
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
+        this.position.y = constrain(this.position.y, -this.height, this.lineLength);
+        this.acceleration.mult(0);
     }
 
     this.draw = function() {
         push();
-        stroke(75);
+        stroke(100, 100);
         strokeWeight(2);
         line(this.position.x + (this.width * 0.9), this.position.y+5, this.position.x + (this.width*0.9), 0);
         image(hookpng, this.position.x, this.position.y, this.width, this.height);
