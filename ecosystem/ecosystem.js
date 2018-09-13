@@ -323,4 +323,13 @@ let Tank = function(x, y, w, h, color) {
     this.addHook = function(size, maxLine) {
         this.hooks.push(new Hook(size, maxLine, this));
     }
+
+    this.updateHooks = function() {
+        for (let i = 0; i < this.hooks.length; i++) {
+            // If the hook has ascended back up all the way then delete it
+            if (this.hooks[i].ascend && this.hooks[i].position.y < this.hooks[i].lineStart.y) {
+                this.hooks.splice(i, 1);
+            }
+        }
+    }
 }
