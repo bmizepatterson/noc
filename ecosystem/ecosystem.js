@@ -44,9 +44,9 @@ function windowResized() {
     let oldW = width, oldH = height;
     resizeCanvas(windowWidth, windowHeight);
     // Update any tanks that were set to the window height/width
-    for (let tank in tanks) {
-        if (tank.width = oldW) tank.w = width;
-        if (tank.height = oldH) tank.h = height;
+    for (let tank of tanks) {
+        if (tank.width = oldW) tank.width = width;
+        if (tank.height = oldH) tank.height = height;
     }
 }
 
