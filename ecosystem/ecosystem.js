@@ -22,6 +22,11 @@ function draw() {
         fish.b += random(0.001, 0.1);
         fish.applyForce(wander);
 
+        // Attract toward mouse
+        if (mouseX && mouseY) {
+            fish.applyForce(fish.attract(mouseX, mouseY));
+        }
+
         fish.update();
         fish.checkEdges();
         fish.draw();
@@ -116,13 +121,12 @@ let Fish = function(w, h) {
         // Return a range of values on which to map Perlin noise.
         // Negative values accelerate to the left; positive values to the right.
         let p = random();
-        // Fish within the left/right buffer have a higher chance of turning around
-        let buffer = 100;
+        // Fish within the left/right buffer will definintely turn around
+        let buffer = 10;
         if ((this.position.x < buffer && this.orientation == LEFT) ||
             (this.position.x > this.tankWidth - buffer && this.orientation == RIGHT)) {
-            p += 0.25;
+            p += 0.5;
         }
-
 
         if (p > 0.5) {
             // Return positive range to start moving to the right
@@ -134,5 +138,15 @@ let Fish = function(w, h) {
             if (this.orientation == LEFT) return {min: -1, max: -0.01};
             else return {min: 0, max: 1};
         }
+    }
+
+    this.attract = function(x, y) {
+        let origin = createVector(x, y);
+        let force = p5.Vector.sub(origin, this.position);
+        let distance = force.mag();
+        force.normalize();
+        let strength = 10000 / (distance);
+        force.mult(strength);
+        return force;
     }
 }
