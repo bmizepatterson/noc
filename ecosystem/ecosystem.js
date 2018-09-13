@@ -157,7 +157,7 @@ let Fish = function(w, h) {
         let distance = force.mag();
         force.normalize();
         let strength = 0;
-        if (distance < 200) strength = 10000 / (distance * 0.5);
+        if (distance < 200) strength = 100 / (distance * 0.5);
         force.mult(strength);
         return force;
     }
