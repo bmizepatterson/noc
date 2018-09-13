@@ -106,11 +106,13 @@ let Fish = function(w, h) {
 
     this.checkEdges = function() {
         // Bump against the edges of the tank.
-        // Calculate position of edges
-        let right  = this.position.x + this.width / 2;
-        let left   = this.position.x - this.width / 2;
-        let bottom = this.position.y + this.height / 2;
-        let top    = this.position.y - this.height / 2;
+        // Calculate edge as a circle around the fish of diameter equal to
+        // the fish's larger dimension.
+        let radius = this.width > this.height ? this.width / 2 : this.height / 2;
+        let right  = this.position.x + radius;
+        let left   = this.position.x - radius;
+        let bottom = this.position.y + radius;
+        let top    = this.position.y - radius;
 
         if (right > this.tankWidth) this.position.x = this.prevPosition.x;
         else if (left < 0) this.position.x = this.prevPosition.x;
