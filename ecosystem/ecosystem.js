@@ -54,7 +54,8 @@ let Fish = function(w, h, color, tank) {
     const LEFT = -1, RIGHT = 1, UP = -10, DOWN = 10;   // Orientations
     this.width        = w;
     this.height       = h;
-    this.mass         = w * h / 100;    // Mass is proportional to area, in arbitrary fashion
+    // Mass is proportional to area, in arbitrary fashion
+    this.mass         = w * h / 100;
     this.col          = color;
     this.tank         = tank;
     // Fish start somewhere in the middle of the tank
@@ -62,7 +63,6 @@ let Fish = function(w, h, color, tank) {
         this.tank.width / 2 + random(-200, 200),
         this.tank.height / 2 + random(-200, 200)
     );
-    this.prevPosition = this.position.copy();
     this.velocity     = createVector(0, 0);
     this.acceleration = createVector(0, 0);
     this.topspeed     = 5;
@@ -77,7 +77,6 @@ let Fish = function(w, h, color, tank) {
     this.update = function() {
         this.velocity.add(this.acceleration);
         this.velocity.limit(this.topspeed);
-        this.prevPosition = this.position.copy();
         this.position.add(this.velocity);
 
         // Update orientation
@@ -102,22 +101,6 @@ let Fish = function(w, h, color, tank) {
         pop();
     }
 
-    this.checkEdges = function() {
-        // Bump against the edges of the tank.
-        // Calculate edge of fish as a circle around the fish of diameter equal to the fish's larger dimension.
-        let radius = this.width > this.height ? this.width / 2 : this.height / 2;
-        let right  = this.position.x + radius;
-        let left   = this.position.x - radius;
-        let bottom = this.position.y + radius;
-        let top    = this.position.y - radius;
-
-        if (right > this.tank.width) this.position.x = this.prevPosition.x;
-        else if (left < 0) this.position.x = this.prevPosition.x;
-     
-        if (bottom > this.tank.height) this.position.y = this.prevPosition.y;
-        else if (top < 0) this.position.y = this.prevPosition.y;
-    }
-
     this.applyForce = function(force) {
         if (force instanceof p5.Vector) {
             f = force.copy();
@@ -129,18 +112,19 @@ let Fish = function(w, h, color, tank) {
 
     this.getDirection = function() {
         // Return a range of values on which to map Perlin noise.
-        let p, buffer, direction = {};
         const RIGHT_MIN = 0, RIGHT_MAX = 10, LEFT_MIN = -10, LEFT_MAX = 0;
         const DOWN_MIN = 0, DOWN_MAX = 10, UP_MIN = -10, UP_MAX = 0;
+        // The buffer is equal to the fish's larger dimension.
+        let buffer = this.width > this.height ? this.width : this.height;
+        let p, direction = {};
 
         // HORIZONTAL MOVEMENT
         // Negative values accelerate to the left; positive values to the right.
         p = random();
-        // Fish within the left/right buffer will definintely turn around
-        buffer = 50;
+        // Fish too close to the left/right edge will definintely turn around
         if ((this.position.x < buffer && this.orientation.h == LEFT) ||
             (this.position.x > this.tank.width - buffer && this.orientation.h == RIGHT)) {
-            p += 0.5;
+            p++;
         }
         if (p > 0.5) {
             if (this.orientation.h == LEFT) {
@@ -166,11 +150,10 @@ let Fish = function(w, h, color, tank) {
         // VERTICAL MOVEMENT
         // Negative values accelerate up; positive values down.
         p = random();
-        // Fish within the top/bottom buffer will definintely turn around
-        buffer = 50;
+        // Fish too close to the top/bottom edge will definintely turn around
         if ((this.position.y < buffer && this.orientation.v == UP) ||
             (this.position.y > this.tank.height - buffer && this.orientation.v == DOWN)) {
-            p += 0.5;
+            p++;
         }
         if (p > 0.5) {
             if (this.orientation.v == DOWN) {
@@ -222,7 +205,6 @@ let Fish = function(w, h, color, tank) {
         }
 
         this.update();
-        this.checkEdges();
         this.draw();
     }
 }
