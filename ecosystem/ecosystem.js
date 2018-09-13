@@ -42,6 +42,8 @@ function draw() {
             let lineLength = random(100, tank.height-100);
             tank.addHook(size, lineLength);
         }
+
+        tank.updateHooks();
     }
 
 }
@@ -239,7 +241,7 @@ let Hook = function(size, maxLine, tank) {
     this.prevPosition = this.position.copy();
     this.velocity     = createVector(0, 0);
     this.acceleration = createVector(0, 0);
-    this.maxLine      = maxLine;
+    this.maxLine      = constrain(maxLine, this.height, this.tank.height - this.height);
     this.zIndex       = random(1000);
     // Save initial start/end points of the fishing line
     this.lineStart    = createVector(
@@ -327,7 +329,7 @@ let Tank = function(x, y, w, h, color) {
     this.updateHooks = function() {
         for (let i = 0; i < this.hooks.length; i++) {
             // If the hook has ascended back up all the way then delete it
-            if (this.hooks[i].ascend && this.hooks[i].position.y < this.hooks[i].lineStart.y) {
+            if (this.hooks[i].ascend && this.hooks[i].position.y < -this.hooks[i].height) {
                 this.hooks.splice(i, 1);
             }
         }
