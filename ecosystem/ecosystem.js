@@ -9,16 +9,17 @@ function setup() {
     // Create one tank this size of the window
     let tank = new Tank(0, 0, width, height, color(50, 126, 206));
     // Create fish
-    let total = 10;
+    let total = random(10, 30);
     for (let i = 0; i < total; i++) {
-        tank.addFish(50, 25, color(232, 109, 31));
+        let size = createVector(50, 25);
+        size.mult(random(0.5, 2));
+        tank.addFish(size.x, size.y, color(232, 109, 31));
     }    
     tanks.push(tank);
 }
 
 function draw() {
     clear();
-
     for (let tank of tanks) {
         // First draw the tank, since it goes behind everything else.
         tank.draw();
@@ -35,14 +36,12 @@ function draw() {
                 item.processFrame();
             }
         }
-    
         // Randomly create fish hooks
         if (random() < 0.001) {
             let size = random(0.2, 0.8);
             let lineLength = random(100, tank.height-100);
             tank.addHook(size, lineLength);
         }
-
         tank.updateHooks();
     }
 
@@ -66,11 +65,7 @@ let Fish = function(w, h, color, tank) {
     this.mass         = w * h / 100;
     this.col          = color;
     this.tank         = tank;
-    // Fish start somewhere in the middle of the tank
-    this.position     = createVector(
-        this.tank.width / 2 + random(-200, 200),
-        this.tank.height / 2 + random(-200, 200)
-    );
+    this.position     = createVector(random(this.tank.width), random(this.tank.height));
     this.velocity     = createVector(0, 0);
     this.acceleration = createVector(0, 0);
     this.topspeed     = 5;
@@ -120,20 +115,15 @@ let Fish = function(w, h, color, tank) {
 
     this.getDirection = function() {
         // Return a range of values on which to map Perlin noise.
-        const RIGHT_MIN = 0, RIGHT_MAX = 10, LEFT_MIN = -10, LEFT_MAX = 0;
-        const DOWN_MIN = 0, DOWN_MAX = 10, UP_MIN = -10, UP_MAX = 0;
+        const RIGHT_MIN = 0.1, RIGHT_MAX = 10, LEFT_MIN = -10, LEFT_MAX = -0.1;
+        const DOWN_MIN = 0.1, DOWN_MAX = 10, UP_MIN = -10, UP_MAX = -0.1;
         // The buffer is equal to the fish's larger dimension.
         let buffer = this.width > this.height ? this.width : this.height;
         let p, direction = {};
 
         // HORIZONTAL MOVEMENT
         // Negative values accelerate to the left; positive values to the right.
-        p = random();
-        // Fish too close to the left/right edge will definintely turn around
-        if ((this.position.x < buffer && this.orientation.h == LEFT) ||
-            (this.position.x > this.tank.width - buffer && this.orientation.h == RIGHT)) {
-            p++;
-        }
+        p = random();        
         if (p > 0.5) {
             if (this.orientation.h == LEFT) {
                 // Set a positive range to start moving to the right
@@ -154,15 +144,18 @@ let Fish = function(w, h, color, tank) {
                 direction.hMax = RIGHT_MAX;
             }
         }
+        // Fish too close to the left/right edge should definintely turn around
+        if (this.position.x < buffer) {
+            direction.hMin += 100;
+            direction.hMax += 100;
+        } else if (this.position.x > this.tank.width - buffer) {
+            direction.hMax -= 100;
+            direction.hMax -= 100;
+        }
         
         // VERTICAL MOVEMENT
         // Negative values accelerate up; positive values down.
         p = random();
-        // Fish too close to the top/bottom edge will definintely turn around
-        if ((this.position.y < buffer && this.orientation.v == UP) ||
-            (this.position.y > this.tank.height - buffer && this.orientation.v == DOWN)) {
-            p++;
-        }
         if (p > 0.5) {
             if (this.orientation.v == DOWN) {
                 // Start moving up
@@ -183,12 +176,23 @@ let Fish = function(w, h, color, tank) {
                 direction.vMax = UP_MAX;
             }
         }
-        // The more hooks in the tank, the crazier the movement should be.
-        let frenzyLevel = ceil(this.tank.hooks.length);
-        for (let property in direction) {
-            property *= frenzyLevel;
+        // Fish too close to the top/bottom edge should definintely turn around
+        if (this.position.y < buffer) {
+            direction.vMax += 100;
+            direction.vMin += 100;
+        } else if (this.position.y > this.tank.height - buffer) {
+            direction.vMax -= 100;
+            direction.vMin -= 100;
         }
 
+        // The more hooks in the tank, the crazier the movement should be.
+        let frenzyLevel = this.tank.hooks.length + 1;
+        // Speed should be inversely proportional to mass.
+        let sizeFactor = 1 / this.mass;
+        for (let property in direction) {
+            direction[property] *= frenzyLevel;
+            direction[property] *= sizeFactor;
+        }
         return direction;
     }
 
@@ -198,7 +202,7 @@ let Fish = function(w, h, color, tank) {
         let distance = force.mag();
         force.normalize();
         let strength = 0;
-        if (distance < 200) strength = 100 / (distance * 0.5);
+        if (distance < 200) strength = 1000 / (distance * 0.5);
         force.mult(strength);
         return force;
     }
@@ -294,7 +298,7 @@ let Hook = function(size, maxLine, tank) {
             let force = p5.Vector.sub(fish.position, this.position);
             let distance = force.mag();
             force.normalize();
-            let strength = 500 / distance;
+            let strength = 5000 / distance;
             force.mult(strength);
             return force;
         }
