@@ -22,31 +22,20 @@ function draw() {
     clear();
 
     for (let tank of tanks) {
+        // First draw the tank, since it goes behind everything else.
         tank.draw();
-
-        for (let hook of tank.hooks) {
-            hook.update();
-            hook.draw();
-        }
-
-        for (let fish of tank.fish) {
-            let dir = fish.getDirection();
-            let wander = createVector(
-                map(noise(fish.a), 0, 1, dir.hMin, dir.hMax), 
-                map(noise(fish.b), 0, 1, dir.vMin, dir.vMax)
-            );
-            fish.a += random(0.001, 10);
-            fish.b += random(0.001, 10);
-            fish.applyForce(wander);
-
-            // Attract toward mouse
-            if (mouseX && mouseY) {
-                fish.applyForce(fish.attractMouse(mouseX, mouseY));
+        // We're going to iterate over all the fish and hooks in this tank.
+        let items = tank.fish.concat(tank.hooks);
+        // Order items according to zIndex property (largest to smallest)
+        items.sort((a,b) => {
+            if (a.zIndex == undefined || b.zIndex == undefined) return 0;
+            return b.zIndex - a.zIndex;
+        });
+        // Now draw each item
+        for (let item of items) {
+            if (item.processFrame !== undefined) {
+                item.processFrame();
             }
-
-            fish.update();
-            fish.checkEdges();
-            fish.draw();
         }
     }
 }
@@ -83,6 +72,7 @@ let Fish = function(w, h, color, tank) {
     // h = LEFT|RIGHT
     // v = UP|DOWN
     this.orientation  = {h: LEFT, v: UP};
+    this.zIndex       = random(1000);
 
     this.update = function() {
         this.velocity.add(this.acceleration);
@@ -215,6 +205,26 @@ let Fish = function(w, h, color, tank) {
         force.mult(strength);
         return force;
     }
+
+    this.processFrame = function() {
+        let dir = this.getDirection();
+        let wander = createVector(
+            map(noise(this.a), 0, 1, dir.hMin, dir.hMax),
+            map(noise(this.b), 0, 1, dir.vMin, dir.vMax)
+        );
+        this.a += random(0.001, 10);
+        this.b += random(0.001, 10);
+        this.applyForce(wander);
+
+        // Attract toward mouse
+        if (mouseX && mouseY) {
+            this.applyForce(this.attractMouse(mouseX, mouseY));
+        }
+
+        this.update();
+        this.checkEdges();
+        this.draw();
+    }
 }
 
 let Hook = function(x, y, size, tank) {
@@ -229,6 +239,8 @@ let Hook = function(x, y, size, tank) {
     );
     this.velocity     = createVector(0, 1);
     this.acceleration = createVector(0, 0);
+    this.lineLength   = lineLength;
+    this.zIndex       = random(1000);
 
     this.update = function() {
         this.velocity.add(this.acceleration);
@@ -250,6 +262,11 @@ let Hook = function(x, y, size, tank) {
             // Not gonna bother with mass of hook
             this.acceleration.add(f);
         }
+    }
+
+    this.processFrame = function() {
+        this.update();
+        this.draw();
     }
 }
 
