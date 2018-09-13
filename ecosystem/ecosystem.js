@@ -1,4 +1,4 @@
-let school = [], c_water, c_fish, hooks = [], hookpng;
+let tanks = [], c_fish, hookpng;
 
 function preload() {
     hookpng = loadImage('hook.png');    
@@ -6,58 +6,72 @@ function preload() {
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    c_water = color(50, 126, 206);
     c_fish  = color(232, 109, 31);
+    // Create tank
+    let tank = new Tank(0,0,width,height,color(50, 126, 206));
+    // Create fish
     let total = 10; //random(5,15);
     for (let i = 0; i < total; i++) {
-        school[i] = new Fish(50, 25);
+        tank.add(new Fish(50, 25, tank));
     }
-    hooks.push(new Hook(100, 100, 0.5));
+    // Create hooks
+    tank.add(new Hook(100, 100, 0.5, tank));
+    tanks.push(tank);
 }
 
 function draw() {
-    background(c_water);
+    clear();
 
-    for (let hook of hooks) {
-        hook.draw();
-    }
+    for (let tank of tanks) {
+        tank.draw();
 
-    for (let fish of school) {
-        let dir = fish.getDirection();
-        let wander = createVector(
-            map(noise(fish.a), 0, 1, dir.hMin, dir.hMax), 
-            map(noise(fish.b), 0, 1, dir.vMin, dir.vMax)
-        );
-        fish.a += random(0.001, 10);
-        fish.b += random(0.001, 10);
-        fish.applyForce(wander);
-
-        // Attract toward mouse
-        if (mouseX && mouseY) {
-            fish.applyForce(fish.attractMouse(mouseX, mouseY));
+        for (let hook of tank.hooks) {
+            hook.update();
+            hook.draw();
         }
 
-        fish.update();
-        fish.checkEdges();
-        fish.draw();
+        for (let fish of tank.fish) {
+            let dir = fish.getDirection();
+            let wander = createVector(
+                map(noise(fish.a), 0, 1, dir.hMin, dir.hMax), 
+                map(noise(fish.b), 0, 1, dir.vMin, dir.vMax)
+            );
+            fish.a += random(0.001, 10);
+            fish.b += random(0.001, 10);
+            fish.applyForce(wander);
+
+            // Attract toward mouse
+            if (mouseX && mouseY) {
+                fish.applyForce(fish.attractMouse(mouseX, mouseY));
+            }
+
+            fish.update();
+            fish.checkEdges();
+            fish.draw();
+        }
     }
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+    let oldW = width, oldH = height;
+    resizeCanvas(windowWidth, windowHeight);
+    // Update any tanks that were set to the window height/width
+    for (let tank in tanks) {
+        if (tank.width = oldW) tank.w = width;
+        if (tank.height = oldH) tank.h = height;
+    }
 }
 
-let Fish = function(w, h) {
+let Fish = function(w, h, tank) {
     const LEFT = -1, RIGHT = 1, UP = -10, DOWN = 10;   // Orientations
     this.width        = w;
     this.height       = h;
     this.mass         = w * h / 100;    // Mass is proportional to area, in arbitrary fashion
-    this.tankHeight   = height;
-    this.tankWidth    = width;
+    this.tank         = tank;
     // Fish start somewhere in the middle of the tank
     this.position     = createVector(
-        this.tankWidth / 2 + random(-200, 200),
-        this.tankHeight / 2 + random(-200, 200)
+        this.tank.width / 2 + random(-200, 200),
+        this.tank.height / 2 + random(-200, 200)
     );
     this.prevPosition = this.position.copy();
     this.velocity     = createVector(0, 0);
@@ -107,10 +121,10 @@ let Fish = function(w, h) {
         let bottom = this.position.y + radius;
         let top    = this.position.y - radius;
 
-        if (right > this.tankWidth) this.position.x = this.prevPosition.x;
+        if (right > this.tank.width) this.position.x = this.prevPosition.x;
         else if (left < 0) this.position.x = this.prevPosition.x;
      
-        if (bottom > this.tankHeight) this.position.y = this.prevPosition.y;
+        if (bottom > this.tank.height) this.position.y = this.prevPosition.y;
         else if (top < 0) this.position.y = this.prevPosition.y;
     }
 
@@ -135,7 +149,7 @@ let Fish = function(w, h) {
         // Fish within the left/right buffer will definintely turn around
         buffer = 50;
         if ((this.position.x < buffer && this.orientation.h == LEFT) ||
-            (this.position.x > this.tankWidth - buffer && this.orientation.h == RIGHT)) {
+            (this.position.x > this.tank.width - buffer && this.orientation.h == RIGHT)) {
             p += 0.5;
         }
         if (p > 0.5) {
@@ -165,7 +179,7 @@ let Fish = function(w, h) {
         // Fish within the top/bottom buffer will definintely turn around
         buffer = 50;
         if ((this.position.y < buffer && this.orientation.v == UP) ||
-            (this.position.y > this.tankHeight - buffer && this.orientation.v == DOWN)) {
+            (this.position.y > this.tank.height - buffer && this.orientation.v == DOWN)) {
             p += 0.5;
         }
         if (p > 0.5) {
@@ -203,13 +217,24 @@ let Fish = function(w, h) {
     }
 }
 
-let Hook = function(x, y, size) {
+let Hook = function(x, y, size, tank) {
     // Size should be a factor between 0 and 1 by which to scale the hook image
     const maxW = 100, maxH = 295;
-    this.position = createVector(x, y);
-    this.size = constrain(size, 0, 1);
-    this.width = maxW * size;
-    this.height = maxH * size;
+    this.size         = constrain(size, 0, 1);
+    this.width        = maxW * size;
+    this.height       = maxH * size;
+    this.tank         = tank;
+    this.position     = createVector(
+        random(this.tank.width - this.width),
+        -this.height
+    );
+    this.velocity     = createVector(0, 1);
+    this.acceleration = createVector(0, 0);
+
+    this.update = function() {
+        this.velocity.add(this.acceleration);
+        this.position.add(this.velocity);
+    }
 
     this.draw = function() {
         push();
@@ -218,5 +243,41 @@ let Hook = function(x, y, size) {
         line(this.position.x + (this.width * 0.9), this.position.y+5, this.position.x + (this.width*0.9), 0);
         image(hookpng, this.position.x, this.position.y, this.width, this.height);
         pop();
+    }
+
+    this.applyForce = function(force) {
+        if (force instanceof p5.Vector) {
+            f = force.copy();
+            // Not gonna bother with mass of hook
+            this.acceleration.add(f);
+        }
+    }
+}
+
+let Tank = function(x, y, w, h, color) {
+    this.x = x;
+    this.y = y;
+    this.width = w;
+    this.height = h;
+    this.color = color;
+    this.fish = [];
+    this.hooks = [];
+
+    this.draw = function() {
+        push();
+        noStroke();
+        fill(this.color);
+        rect(this.x, this.y, this.width, this.height);
+        pop();
+    }
+
+    this.add = function(thing) {
+        if (thing instanceof Fish) {
+            this.fish.push(thing);
+        } else if (thing instanceof Hook) {
+            this.hooks.push(thing);
+        } else {
+            console.log('Cannot add ', thing, ' to tank.');
+        }
     }
 }
