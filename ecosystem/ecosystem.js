@@ -13,12 +13,13 @@ function setup() {
 function draw() {
     background(c_water);
     for (let fish of school) {
+        let hMovement = fish.getDirection();
         let wander = createVector(
-            map(noise(fish.a), 0, 1, -1, 1), 
+            map(noise(fish.a), 0, 1, hMovement.min, hMovement.max), 
             map(noise(fish.b), 0, 1, -0.1, 0.1)
         );
-        fish.a += random(0.001, 0.1); //0.01;
-        fish.b += random(0.001, 0.1); //0.01;
+        fish.a += random(0.001, 0.1);
+        fish.b += random(0.001, 0.1);
         fish.applyForce(wander);
 
         fish.update();
@@ -88,17 +89,18 @@ let Fish = function(w, h) {
     }
 
     this.checkEdges = function() {
-        if (this.position.x + this.width/2 > this.tankWidth) {
-          this.position.x = this.prevPosition.x;
-        } else if (this.position.x - this.width/2 < 0) {
-          this.position.x = this.prevPosition.x;
-        }
+        // Bump against the edges of the tank.
+        // Calculate position of edges
+        let right  = this.position.x + this.width / 2;
+        let left   = this.position.x - this.width / 2;
+        let bottom = this.position.y + this.height / 2;
+        let top    = this.position.y - this.height / 2;
+
+        if (right > this.tankWidth) this.position.x = this.prevPosition.x;
+        else if (left < 0) this.position.x = this.prevPosition.x;
      
-        if (this.position.y + this.height/2 > this.tankHeight) {
-          this.position.y = this.prevPosition.y;
-        } else if (this.position.y - this.height/2 < 0) {
-          this.position.y = this.prevPosition.y;
-        }
+        if (bottom > this.tankHeight) this.position.y = this.prevPosition.y;
+        else if (top < 0) this.position.y = this.prevPosition.y;
     }
 
     this.applyForce = function(force) {
@@ -107,6 +109,30 @@ let Fish = function(w, h) {
             // acceleration = force / mass
             f.div(this.mass);
             this.acceleration.add(f);
+        }
+    }
+
+    this.getDirection = function() {
+        // Return a range of values on which to map Perlin noise.
+        // Negative values accelerate to the left; positive values to the right.
+        let p = random();
+        // Fish within the left/right buffer have a higher chance of turning around
+        let buffer = 100;
+        if ((this.position.x < buffer && this.orientation == LEFT) ||
+            (this.position.x > this.tankWidth - buffer && this.orientation == RIGHT)) {
+            p += 0.25;
+        }
+
+
+        if (p > 0.5) {
+            // Return positive range to start moving to the right
+            if (this.orientation == LEFT) return {min: 0.01, max: 1};
+            // Return negative range to start moving to the left
+            else return {min: -1, max: 0};
+        } else {
+            // Keep going the same direction
+            if (this.orientation == LEFT) return {min: -1, max: -0.01};
+            else return {min: 0, max: 1};
         }
     }
 }
