@@ -12,7 +12,7 @@ function setup() {
     for (let i = 0; i < total; i++) {
         school[i] = new Fish(50, 25);
     }
-    hooks.push(new Hook(100, 100, 100, 295));
+    hooks.push(new Hook(100, 100, 0.5));
 }
 
 function draw() {
@@ -203,13 +203,19 @@ let Fish = function(w, h) {
     }
 }
 
-let Hook = function(x, y, w, h) {
+let Hook = function(x, y, size) {
+    // Size should be a factor between 0 and 1 by which to scale the hook image
+    const maxW = 100, maxH = 295;
     this.position = createVector(x, y);
-    this.width = w;
-    this.height = h;
+    this.size = constrain(size, 0, 1);
+    this.width = maxW * size;
+    this.height = maxH * size;
 
     this.draw = function() {
         push();
+        stroke(75);
+        strokeWeight(2);
+        line(this.position.x + (this.width * 0.9), this.position.y+5, this.position.x + (this.width*0.9), 0);
         image(hookpng, this.position.x, this.position.y, this.width, this.height);
         pop();
     }
