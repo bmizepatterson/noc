@@ -1,4 +1,4 @@
-let tanks = [], c_fish, hookpng;
+let tanks = [], hookpng;
 
 function preload() {
     hookpng = loadImage('hook.png');    
@@ -6,13 +6,12 @@ function preload() {
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    c_fish  = color(232, 109, 31);
-    // Create tank
-    let tank = new Tank(0,0,width,height,color(50, 126, 206));
+    // Create one tank this size of the window
+    let tank = new Tank(0, 0, width, height, color(50, 126, 206));
     // Create fish
-    let total = 10; //random(5,15);
+    let total = 10;
     for (let i = 0; i < total; i++) {
-        tank.add(new Fish(50, 25, tank));
+        tank.add(new Fish(50, 25, color(232, 109, 31), tank));
     }
     // Create hooks
     tank.add(new Hook(100, 100, 0.5, tank));
@@ -62,11 +61,12 @@ function windowResized() {
     }
 }
 
-let Fish = function(w, h, tank) {
+let Fish = function(w, h, color, tank) {
     const LEFT = -1, RIGHT = 1, UP = -10, DOWN = 10;   // Orientations
     this.width        = w;
     this.height       = h;
     this.mass         = w * h / 100;    // Mass is proportional to area, in arbitrary fashion
+    this.col          = color;
     this.tank         = tank;
     // Fish start somewhere in the middle of the tank
     this.position     = createVector(
@@ -102,7 +102,7 @@ let Fish = function(w, h, tank) {
     this.draw = function() {
         push();
         noStroke();
-        fill(c_fish);
+        fill(this.col);
         translate(this.position.x, this.position.y);
         // Fish is drawn facing left by default. Get the heading of the velocity 
         // vector and rotate toward current direction.
@@ -219,10 +219,9 @@ let Fish = function(w, h, tank) {
 
 let Hook = function(x, y, size, tank) {
     // Size should be a factor between 0 and 1 by which to scale the hook image
-    const maxW = 100, maxH = 295;
     this.size         = constrain(size, 0, 1);
-    this.width        = maxW * size;
-    this.height       = maxH * size;
+    this.width        = 100 * size;
+    this.height       = 295 * size;
     this.tank         = tank;
     this.position     = createVector(
         random(this.tank.width - this.width),
@@ -259,14 +258,14 @@ let Tank = function(x, y, w, h, color) {
     this.y = y;
     this.width = w;
     this.height = h;
-    this.color = color;
+    this.col = color;
     this.fish = [];
     this.hooks = [];
 
     this.draw = function() {
         push();
         noStroke();
-        fill(this.color);
+        fill(this.col);
         rect(this.x, this.y, this.width, this.height);
         pop();
     }
