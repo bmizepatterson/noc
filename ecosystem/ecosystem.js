@@ -203,6 +203,11 @@ let Fish = function(w, h, color, tank) {
         if (mouseX && mouseY) {
             this.applyForce(this.attractMouse(mouseX, mouseY));
         }
+        
+        // Flee fish hooks
+        for (let hook of this.tank.hooks) {
+            this.applyForce(hook.repelFish(this));
+        }
 
         this.update();
         this.draw();
@@ -272,6 +277,17 @@ let Hook = function(x, y, size, maxLine, tank) {
         this.update();
         this.checkLength();
         this.draw();
+    }
+    
+    this.repelFish = function(fish) {
+        if (fish instanceof Fish) {
+            let force = p5.Vector.sub(fish.position, this.position);
+            let distance = force.mag();
+            force.normalize();
+            let strength = 500 / distance;
+            force.mult(strength);
+            return force;
+        }
     }
 }
 
