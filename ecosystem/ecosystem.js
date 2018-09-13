@@ -145,7 +145,7 @@ let Fish = function(w, h) {
         let force = p5.Vector.sub(origin, this.position);
         let distance = force.mag();
         force.normalize();
-        let strength = 10000 / (distance);
+        let strength = 10000 / (distance * 0.5);
         force.mult(strength);
         return force;
     }
