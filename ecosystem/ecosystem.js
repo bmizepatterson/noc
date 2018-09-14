@@ -190,7 +190,7 @@ let Fish = function(w, h, tank) {
         // The more hooks in the tank, the crazier the movement should be.
         let frenzyLevel = this.tank.hooks.length + 1;
         // Speed should be inversely proportional to mass.
-        let sizeFactor = 1 / this.mass;
+        let sizeFactor = 1 / (10 * this.mass);
         for (let property in direction) {
             direction[property] *= frenzyLevel;
             direction[property] *= sizeFactor;
@@ -204,7 +204,7 @@ let Fish = function(w, h, tank) {
         let distance = force.mag();
         force.normalize();
         let strength = 0;
-        if (distance < 200) strength = 1000 / (distance * 0.5);
+        if (distance < 200) strength = 1000 / (this.mass * distance * 0.5);
         force.mult(strength);
         return force;
     }
@@ -300,7 +300,7 @@ let Hook = function(size, maxLine, tank) {
             let force = p5.Vector.sub(fish.position, this.position);
             let distance = force.mag();
             force.normalize();
-            let strength = 5000 / distance;
+            let strength = 5000 / (fish.mass * distance);
             force.mult(strength);
             return force;
         }
