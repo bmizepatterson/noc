@@ -6,7 +6,7 @@ function setup() {
 }
 
 function draw() {
-    background(255);
+    background(200);
 
     for (let i = 0; i < balls.length; i++) {
         let ball = balls[i];
@@ -37,17 +37,17 @@ let Cannonball = function(x, y) {
     this.position      = createVector(x, y);
     this.velocity      = createVector(0, 0);
     this.acceleration  = createVector(0, 0);
-    this.topspeed      = 10;
-    this.radius        = 8;
+    this.radius        = 20;
     this.angle         = 0;
-    this.aVelocity     = 0;
-    this.aAcceleration = 0;
+    this.aVelocity     = 1;
+    this.aAcceleration = -0.01;
 
     this.update = function() {
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
+
         this.aVelocity += this.aAcceleration;
-        this.aVelocity = constrain(this.aVelocity,-0.1,0.1);
+        this.aVelocity = constrain(this.aVelocity, 0, 1);
         this.angle += this.aVelocity;
         this.acceleration.mult(0);
     }
@@ -57,7 +57,10 @@ let Cannonball = function(x, y) {
         fill(0);
         push();
         translate(this.position.x, this.position.y);
+        rotate(this.angle);
         ellipse(0, 0, this.radius*2, this.radius*2);
+        stroke(255);
+        arc(0, 0, this.radius, this.radius, 0, PI/2);
         pop();
     }
 
@@ -66,7 +69,7 @@ let Cannonball = function(x, y) {
     }
 }
 
-let Cannon = function(x, y, w, h, angle) {
+let Cannon = function(x, y) {
     this.position = createVector(x, y);
     this.angle    = -PI/4;
 
@@ -78,10 +81,10 @@ let Cannon = function(x, y, w, h, angle) {
         push();
         rotate(this.angle);
         fill(175);
-        rect(0, 0, 40, 20);
+        rect(0, 0, 80, 40);
         pop();
         fill(0);
-        rect(0, 15, 10, 20);
+        rect(0, 30, 20, 40);
         pop();
         noStroke();
     }
