@@ -1,23 +1,28 @@
-let ball, c;
+let balls = [], c;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
-    c = new Cannon(100, height-100);
-    ball = new Cannonball(c.position.x, c.position.y)
+    c = new Cannon(100, height/2);
 }
 
 function draw() {
     background(255);
 
-    if (c.shot) {
+    for (let i = 0; i < balls.length; i++) {
+        let ball = balls[i];
         let gravity = createVector(0, 0.2);
         ball.applyForce(gravity);
+
+        let friction = ball.velocity.copy();
+        friction.normalize();
+        friction.mult(-0.01);
+        ball.applyForce(friction);
+
         ball.update();
-    }
-    ball.draw();
-    if (ball.position.y > height) {
-        ball = new Cannonball(c.position.x, c.position.y);
-        c.shot = false;
+        ball.draw();
+        if (ball.position.y > height) {
+            balls.splice(i, 1);
+        }
     }
     // Always draw the cannon last so it appears on top
     c.draw();
@@ -25,7 +30,7 @@ function draw() {
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
-    c = new Cannon(100, height-100);
+    c = new Cannon(100, height/2);
 }
 
 let Cannonball = function(x, y) {
@@ -59,18 +64,10 @@ let Cannonball = function(x, y) {
     this.applyForce = function(force) {
         this.acceleration.add(force);
     }
-
-    this.drag = function() {
-        let friction = this.velocity.copy();
-        friction.mult(-1);
-        friction.normalize();
-        this.applyForce(friction.mult(0.1));
-    }
 }
 
 let Cannon = function(x, y, w, h, angle) {
     this.position = createVector(x, y);
-    this.shot     = false;
     this.angle    = -PI/4;
 
     this.draw = function() {
@@ -96,7 +93,8 @@ function keyPressed() {
     } else if (keyCode === LEFT_ARROW) {
         c.angle -= 0.1;
     } else if (key === ' ') {
-        c.shot = true;
+        let ball = new Cannonball(c.position.x, c.position.y);
+        balls.push(ball);
         let force = p5.Vector.fromAngle(c.angle);
         force.mult(10);
         ball.applyForce(force);
