@@ -11,7 +11,7 @@ function draw() {
 
     if (c.shot) {
         let gravity = createVector(0, 0.2);
-        ball.applyForce();
+        ball.applyForce(gravity);
         ball.update();
     }
     ball.draw();
@@ -39,14 +39,11 @@ let Cannonball = function(x, y) {
     this.aAcceleration = 0;
 
     this.update = function() {
-
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
-
         this.aVelocity += this.aAcceleration;
         this.aVelocity = constrain(this.aVelocity,-0.1,0.1);
         this.angle += this.aVelocity;
-
         this.acceleration.mult(0);
     }
 
@@ -57,14 +54,6 @@ let Cannonball = function(x, y) {
         translate(this.position.x, this.position.y);
         ellipse(0, 0, this.radius*2, this.radius*2);
         pop();
-    }
-
-    this.checkEdges = function() {     
-        if (this.position.y > ground - this.radius) {
-            this.velocity.y *= -this.mass/5;
-            this.position.y = ground - this.radius;
-            this.drag();
-        }
     }
 
     this.applyForce = function(force) {
