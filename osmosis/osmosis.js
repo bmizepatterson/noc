@@ -1,99 +1,101 @@
 let particles = [];
+const spring = 0.05;
+const friction = -0.98;
+const numParticles = 200;
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
+    const canvas = createCanvas(500, 500);
+    canvas.parent('canvas-wrapper');
     noStroke();
-    for (let i = 0; i < 10; i++) {
-        let col = color(random(255), random(255), random(255), 100);
-        particles[i] = new Particle(i, 30, col);
+
+    for (let i = 0; i < numParticles; i++) {
+        const col = i < numParticles / 2 ? color(0, 0, 255) : color(255, 0, 0);
+        particles[i] = new Particle(i, 5, col);
+        particles[i].place(particles);
     }
 }
 
 function draw() {
     clear();
     particles.forEach(particle => {
-        particle.place(particles);
-        // particle.update();
-        // particle.checkCollisions();
-        // particle.checkEdges();
+        particle.collide();
+        particle.move();
         particle.display();
     });
 }
 
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+function areColliding(p1, p2) {
+    let dx = p1.position.x - p2.position.x;
+    let dy = p1.position.y - p2.position.y;
+    let distance = sqrt(dx * dx + dy * dy);
+    let minDist = p1.r + p2.r;
+    return distance < minDist;
 }
 
-let Particle = function(id, radius, color) {
-    this.position = createVector(random() * width, random() * height);
-    this.velocity = createVector(0,0); //createVector(random(5), random(5));
-    this.r = radius;
-    this.color = color;
-    this.id = id;
-    this.hit = true;
-
-    this.place = function (objArray) {
-
-        for (i = 0; i < objArray.length; i++) {
-            if (this.id != i) { //dont do the check if it is looking at itself
-
-                this.hit = collideCircleCircle(this.position.x, this.position.y, this.r, objArray[i].position.x, objArray[i].position.y, objArray[i].r);
-
-                if (this.hit) { // if we ever get a true we have to try again, this works since we iterate down through the objects one by one.
-                    //try again:
-                    this.position = createVector(random(width), random(height));
-                }
-            }
-        }
+class Particle {
+    constructor(id, radius, color) {
+        this.position = createVector(random() * width, random() * height);
+        this.velocity = createVector(random(1, 3), random(1, 3));
+        this.r = radius;
+        this.color = color;
+        this.id = id;
     }
 
-    this.update = function() {
+    place() {
+        // Place all particles so none is on top of another.
+        particles.filter(p => p.id !== this.id).forEach(p => {
+            let dx = p.position.x - this.position.x;
+            let dy = p.position.y - this.position.y;
+            let distance = sqrt(dx * dx + dy * dy);
+            let minDist = this.r + p.r;
+            if (areColliding(this, p)) {
+                this.position = createVector(random(width), random(height));
+            }
+        });
+    }
+
+    move() {
         this.position.add(this.velocity);
-    }
-
-    this.checkCollisions = function() {
-        particles.forEach(p => {
-            // if (p5.Vector.sub(p.position, this.position).mag() <= p.r + this.r) {
-            //     this.velocity.mult(-1);
-            //     p.velocity.mult(-1);
-            // }
-            const hit = collideCircleCircle(p.position.x, p.position.y, p.r, this.position.x, this.position.y, this.r);
-            if (hit) {
-                this.velocity.mult(-1);
-                p.velocity.mult(-1);
-            }
-        })
-    }
-
-    this.checkEdges = function() {
         // Bounce off the top edge
         if (this.position.y < this.r) {
-            this.velocity.y *= -1;
+            this.velocity.y *= friction;
             this.position.y = this.r;
         }
         // Bounce off the bottom edge
         if (this.position.y > (height - this.r)) {
-            this.velocity.y *= -1;
+            this.velocity.y *= friction;
             this.position.y = height - this.r;
         }
         // Bounce of the right edge
         if (this.position.x > (width - this.r)) {
-            this.velocity.x *= -1;
+            this.velocity.x *= friction;
             this.position.x = width - this.r;
         }
         // Bounce off the left edge
         if (this.position.x < this.r) {
-            this.velocity.x *= -1;
+            this.velocity.x *= friction;
             this.position.x = this.r;
         }
     }
 
-    this.display = function () {
+    collide() {
+        particles.filter(p => p.id !== this.id && areColliding(this, p)).forEach(p => {
+            let dx = p.position.x - this.position.x;
+            let dy = p.position.y - this.position.y;
+            let angle = atan2(dy, dx);
+            let targetX = this.position.x + cos(angle) * (this.r + p.r);
+            let targetY = this.position.y + sin(angle) * (this.r + p.r);
+            let ax = (targetX - p.position.x) * spring;
+            let ay = (targetY - p.position.y) * spring;
+            let bounce = createVector(ax, ay);
+            this.velocity.sub(bounce);
+            p.velocity.add(bounce)
+        });
+    }
+
+    display() {
         fill(this.color);
         ellipse(this.position.x, this.position.y, 2 * this.r, 2 * this.r);
     }
 }
 
-function getParticleCount() {
-    return this.particles.length;
-}

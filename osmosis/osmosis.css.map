@@ -1,0 +1,9 @@
+{
+    "version": 3,
+    "mappings": "AAAA,AAAA,IAAI,CAAC;EACD,MAAM,EAAE,CAAC;EACT,OAAO,EAAE,CAAC;EACV,MAAM,EAAE,KAAK;CAChB;;AAED,AAAA,UAAU,CAAC;EACP,MAAM,EAAE,IAAI;EACZ,OAAO,EAAE,IAAI;EACb,eAAe,EAAE,MAAM;EACvB,WAAW,EAAE,MAAM;CAKtB;;AATD,AAMI,UANM,CAMN,MAAM,CAAC;EACH,MAAM,EAAE,eAAe;CAC1B",
+    "sources": [
+        "osmosis.scss"
+    ],
+    "names": [],
+    "file": "osmosis.css"
+}
