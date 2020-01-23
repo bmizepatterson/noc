@@ -32,7 +32,23 @@ const app = {
             value: 0,
             el: null
         }
-    }
+    },
+    groups: [
+        {
+            name: 'red',
+            color: '#ff0000',
+            ratio: 1,
+            population: 0,
+            radius: 5
+        },
+        {
+            name: 'blue',
+            color: '#0000ff',
+            ratio: 1,
+            population: 0,
+            radius: 5
+        }
+    ]
 }
 
 function init() {
@@ -80,11 +96,27 @@ function setup() {
 function populate() {
     particles = [];
     const population = parseInt(app.settings.population.value, 10);
-    for (let i = 0; i < population; i++) {
-        const col = i < population / 2 ? color(0, 0, 255) : color(255, 0, 0);
-        particles[i] = new Particle(i, 5, col);
-        particles[i].place(particles);
+
+    // Calculate the population of each group based on the set ratio of each.
+    let ratioWhole = app.groups.reduce((acc, g) => acc + g.ratio, 0);
+    app.groups.forEach(g => g.population = floor(population * g.ratio / ratioWhole));
+    while (app.groups.reduce((acc, g) => acc + g.population, 0) < population) {
+        // If even distribution of the total population is not possible,
+        // randomly assign an extra particle to a group until we reach
+        // the total population.
+        const randomIndex = floor(random(0, app.groups.length));
+        app.groups[randomIndex].population++;
     }
+    console.log(app.groups);
+
+    // Now create the particles in each group.
+    app.groups.forEach(group => {
+        for (let i = 0; i < group.population; i++) {
+            const particle = new Particle(group, i);
+            particles.push(particle);
+            particle.place(particles);
+        }
+    });
 }
 
 function draw() {
@@ -157,15 +189,17 @@ function stop() {
 }
 
 class Particle {
-    constructor(id, radius, color) {
+    constructor(group, id) {
         this.position = null;
         this.velocity = createVector(random(-1, 1), random(-1, 1));
-        this.r = radius;
-        this.color = color;
-        this.id = id;
+        this.r = group.radius;
+        this.color = group.color;
+        this.id = group.name + id;
         this.spring = parseFloat(app.settings.spring.value);
         this.friction = parseFloat(app.settings.friction.value);
         this.placement = app.settings.placement.value;
+        this.sectors = app.groups.length;
+        this.group = group;
     }
 
     place() {
@@ -182,6 +216,13 @@ class Particle {
     getInitialPosition() {
         if (this.placement === 'random') {
             return createVector(random(width), random(height))
+        }
+        if (this.placement === 'grouped') {
+            const sectorWidth = width / this.sectors;
+            const position = createVector(random(sectorWidth), random(height));
+            const offsetFactor = app.groups.findIndex(g => g === this.group);
+            position.x += offsetFactor * sectorWidth;
+            return position;
         }
     }
 
