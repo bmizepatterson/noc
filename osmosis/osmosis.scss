@@ -2,15 +2,69 @@ body {
     margin: 0;
     padding: 0;
     height: 100vh;
+    font-family: sans-serif;
 }
 
 .container {
     height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    padding: 20px;
+    column-gap: 20px;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: 1fr auto 1fr;
+    grid-template-areas:
+        "top    top    top"
+        "left   main   right"
+        "bottom bottom bottom";
+}
 
+.main {
+    grid-area: main;
     canvas {
+        display: block;
         border: 4px solid black;
     }
+}
+
+
+.controls {
+    grid-area: bottom;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: start;
+}
+
+.settings {
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    & > div {
+        margin-bottom: 1rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    input[type="number"] {
+        font-family: monospace;
+        width: 100%;
+    }
+
+    .radio-group {
+        display: grid;
+        column-gap: 0.5em;
+        grid-template-columns: auto 1fr;
+        font-size: 80%;
+        align-items: center;
+    }
+}
+
+.stats {
+    grid-area: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }

@@ -7,6 +7,41 @@
     <title>Osmosis</title>
 </head>
 <body>
-    <div id="canvas-wrapper" class="container"></div>
+    <div class="container">
+        <div class="stats">
+            <p><span id="statsLeft">0</span> : <span id="statsRight">0</span></p>
+        </div>
+        <div id="canvas-wrapper" class="main"></div>
+        <div class="settings">
+            <div>
+                <label for="setPopulation">Population</label>
+                <input type="number" id="setPopulation">
+            </div>
+            <div>
+                <label for="setSpring">Spring</label>
+                <input type="number" id="setSpring" step="0.01">
+            </div>
+            <div>
+                <label for="setFriction">Friction</label>
+                <input type="number" id="setFriction" step="0.01">
+            </div>
+            <div>
+                <label for="setPlacement">Placement</label>
+                <div class="radio-group">
+                    <input type="radio" name="setPlacement" id="setPlacementRandom" value="random" checked>
+                    <label for="setPlacementRandom">Random</label>
+                    <input type="radio" name="setPlacement" id="setPlacementGrouped" value="grouped">
+                    <label for="setPlacementGrouped">Grouped</label>
+                </div>
+            </div>
+            <button type="button" id="appReset">Reset</button>
+        </div>
+        <div class="controls">
+            <button type="button" id="appStart">Start</button>
+            <button type="button" id="appStop">Stop</button>
+        </div>
+    </div>
+
+    <script>init();</script>
 </body>
 </html>
