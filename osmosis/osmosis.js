@@ -1,6 +1,6 @@
 let particles = [];
 const app = {
-    active: true,
+    active: false,
     settings: {
         population: {
             value: 200,
@@ -31,7 +31,9 @@ const app = {
         right: {
             value: 0,
             el: null
-        }
+        },
+        groups: new Map(),
+        els: new Map()
     },
     groups: [
         {
@@ -39,14 +41,14 @@ const app = {
             color: '#ff0000',
             ratio: 1,
             population: 0,
-            radius: 5
+            radius: 10,
         },
         {
             name: 'blue',
             color: '#0000ff',
-            ratio: 1,
+            ratio: 10,
             population: 0,
-            radius: 5
+            radius: 5,
         }
     ]
 }
@@ -85,6 +87,14 @@ function init() {
     const { left, right } = app.stats;
     left.el = document.getElementById('statsLeft');
     right.el = document.getElementById('statsRight');
+
+    // Initialize the group stats
+    app.stats.groups = new Map();
+    app.groups.forEach(group => {
+        app.stats.groups.set(group.name, 0);
+        app.stats.els.set(group.name, document.getElementById(group.name + 'Stats'));
+        app.stats.els.get(group.name).innerHTML = app.stats.groups.get(group.name);
+    });
 }
 
 function setup() {
@@ -107,7 +117,6 @@ function populate() {
         const randomIndex = floor(random(0, app.groups.length));
         app.groups[randomIndex].population++;
     }
-    console.log(app.groups);
 
     // Now create the particles in each group.
     app.groups.forEach(group => {
@@ -117,6 +126,26 @@ function populate() {
             particle.place(particles);
         }
     });
+
+    recordGroupStats();
+}
+
+function recordGroupStats() {
+    app.groups.forEach((group, index) => {
+        // Count the % particles in this group who have wandered outside their sector.
+        const sectorWidth = width / app.groups.length;
+        const min = sectorWidth * index;
+        const max = min + sectorWidth;
+        const numOutsideSector = particles.filter(p => {
+            return p.group === group && (p.position.x < min || p.position.x > max);
+        }).length;
+        app.stats.groups.set(group.name, numOutsideSector / group.population);
+        app.stats.els.get(group.name).innerHTML = formatPercent(app.stats.groups.get(group.name));
+    });
+}
+
+function formatPercent(float) {
+    return nfc(parseFloat(float) * 100, 0) + '%';
 }
 
 function draw() {
@@ -134,6 +163,7 @@ function draw() {
         app.stats.right.value = particles.filter(p => p.position.x > width / 2).length;
         app.stats.left.el.innerHTML = app.stats.left.value;
         app.stats.right.el.innerHTML = app.stats.right.value;
+        recordGroupStats();
 
         // Draw gridlines on top
         stroke(155);
@@ -162,7 +192,6 @@ function writeSettings() {
             }
         }
     }
-    console.debug(app);
 }
 
 function readSettings() {

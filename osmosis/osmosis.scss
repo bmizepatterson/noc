@@ -52,6 +52,10 @@ body {
         width: 100%;
     }
 
+    button {
+        align-self: center;
+    }
+
     .radio-group {
         display: grid;
         column-gap: 0.5em;
@@ -67,4 +71,8 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
+    table th, table td {
+        text-align: left;
+    }
 }

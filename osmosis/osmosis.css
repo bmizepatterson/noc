@@ -79,6 +79,12 @@ body {
   width: 100%;
 }
 
+.settings button {
+  -ms-flex-item-align: center;
+      -ms-grid-row-align: center;
+      align-self: center;
+}
+
 .settings .radio-group {
   display: -ms-grid;
   display: grid;
@@ -109,5 +115,9 @@ body {
   -webkit-box-align: center;
       -ms-flex-align: center;
           align-items: center;
+}
+
+.stats table th, .stats table td {
+  text-align: left;
 }
 /*# sourceMappingURL=osmosis.css.map */
